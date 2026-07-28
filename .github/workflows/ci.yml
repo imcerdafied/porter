@@ -23,7 +23,7 @@ jobs:
       - run: npm audit
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
+          deno-version: v2.8.1
       - name: Type-check Edge Functions
         run: >-
           deno check
