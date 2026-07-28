@@ -1,0 +1,186 @@
+name: Thruline managed Codex build
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: thruline-codex-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event.label.name == 'build-with-codex'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      ISSUE_TITLE: ${{ github.event.issue.title }}
+      ISSUE_BODY: ${{ github.event.issue.body }}
+      CALLBACK_URL: https://oawarizebkppnvdijinz.supabase.co/functions/v1/managed-runner-callback
+    steps:
+      - name: Checkout target repository
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: true
+
+      - name: Identify Thruline run
+        id: thruline
+        shell: bash
+        run: |
+          RUN_ID=$(printf '%s\n' "$ISSUE_BODY" | sed -nE 's/.*Thruline-Run:[[:space:]]*([0-9a-f-]{36}).*/\1/p' | head -1)
+          ITEM_ID=$(printf '%s\n' "$ISSUE_BODY" | sed -nE 's/.*Thruline-Item:[[:space:]]*([0-9a-f-]{36}).*/\1/p' | head -1)
+          if [ -z "$RUN_ID" ]; then
+            echo "The issue is missing its Thruline run marker."
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "item_id=$ITEM_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Report started
+        shell: bash
+        env:
+          RUN_ID: ${{ steps.thruline.outputs.run_id }}
+          CALLBACK_SECRET: ${{ secrets.THRULINE_CALLBACK_SECRET }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            -X POST "$CALLBACK_URL" \
+            -H "Authorization: Bearer $CALLBACK_SECRET" \
+            -H "Content-Type: application/json" \
+            --data "$(jq -n --arg run_id "$RUN_ID" --arg message "Codex is working in $GITHUB_REPOSITORY." \
+              '{run_id:$run_id,status:"running",message:$message}')"
+
+      - name: Prepare common dependencies
+        shell: bash
+        run: |
+          if [ -f package-lock.json ]; then npm ci; fi
+          if [ -f pnpm-lock.yaml ]; then corepack enable && pnpm install --frozen-lockfile; fi
+          if [ -f yarn.lock ]; then corepack enable && yarn install --immutable; fi
+        continue-on-error: true
+
+      - name: Create working branch
+        shell: bash
+        run: |
+          BRANCH="thruline/issue-$ISSUE_NUMBER"
+          git config user.name "thruline-build-agent[bot]"
+          git config user.email "thruline-build-agent[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+      - name: Compose approved prompt
+        shell: bash
+        run: |
+          {
+            echo "Implement the approved Thruline build item below in this repository."
+            echo "Work autonomously until it is reviewable. Make the smallest complete change."
+            echo "Follow repository instructions and conventions. Do not edit CI workflows,"
+            echo "secrets, or unrelated files. Run relevant checks. A human will review the PR."
+            echo
+            echo "## Approved work"
+            echo "Title: $ISSUE_TITLE"
+            echo
+            printf '%s\n' "$ISSUE_BODY"
+          } > "$RUNNER_TEMP/thruline-prompt.md"
+
+      - name: Run Codex
+        id: codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: ${{ runner.temp }}/thruline-prompt.md
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+        continue-on-error: true
+
+      - name: Require Codex success
+        if: steps.codex.outcome != 'success'
+        run: exit 1
+
+      - name: Verify repository
+        shell: bash
+        run: |
+          {
+            echo "## Verification"
+            if [ -f package.json ]; then
+              npm run typecheck --if-present
+              npm test --if-present
+              npm run build --if-present
+            else
+              echo "No package.json found; the agent's repository-specific checks apply."
+            fi
+          } > "$RUNNER_TEMP/verification.md" 2>&1 || true
+
+      - name: Open pull request
+        id: pull_request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.THRULINE_GITHUB_TOKEN || github.token }}
+          CODEX_OUTCOME: ${{ steps.codex.outcome }}
+          CODEX_FINAL_MESSAGE: ${{ steps.codex.outputs.final-message }}
+          RUN_ID: ${{ steps.thruline.outputs.run_id }}
+          ITEM_ID: ${{ steps.thruline.outputs.item_id }}
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            git commit --allow-empty -m "build: review $ISSUE_TITLE (#$ISSUE_NUMBER)"
+          else
+            git commit -m "build: $ISSUE_TITLE (#$ISSUE_NUMBER)"
+          fi
+          git push -u origin "$BRANCH"
+          {
+            echo "Automated build from an approved Thruline item."
+            echo
+            echo "**Human review and merge required.**"
+            echo
+            echo "Closes #$ISSUE_NUMBER"
+            echo "Thruline-Item: $ITEM_ID"
+            echo "Thruline-Run: $RUN_ID"
+            echo
+            echo "## Codex outcome"
+            echo "$CODEX_OUTCOME"
+            echo
+            echo "## Codex summary"
+            printf '%s\n' "$CODEX_FINAL_MESSAGE"
+            echo
+            cat "$RUNNER_TEMP/verification.md"
+          } > "$RUNNER_TEMP/pr-body.md"
+          PR_URL=$(gh pr create \
+            --title "build: $ISSUE_TITLE" \
+            --body-file "$RUNNER_TEMP/pr-body.md" \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "$BRANCH")
+          echo "url=$PR_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Report review ready
+        if: success()
+        shell: bash
+        env:
+          RUN_ID: ${{ steps.thruline.outputs.run_id }}
+          CALLBACK_SECRET: ${{ secrets.THRULINE_CALLBACK_SECRET }}
+          PR_URL: ${{ steps.pull_request.outputs.url }}
+        run: |
+          curl --fail-with-body --silent --show-error \
+            -X POST "$CALLBACK_URL" \
+            -H "Authorization: Bearer $CALLBACK_SECRET" \
+            -H "Content-Type: application/json" \
+            --data "$(jq -n --arg run_id "$RUN_ID" --arg pr_url "$PR_URL" --arg branch "$BRANCH" \
+              '{run_id:$run_id,status:"review_ready",message:"Codex finished. The pull request is ready for human review.",pr_url:$pr_url,branch:$branch,evidence:["Codex completed in GitHub Actions","Repository checks captured in the pull request"]}')"
+
+      - name: Report failure
+        if: failure()
+        shell: bash
+        env:
+          RUN_ID: ${{ steps.thruline.outputs.run_id }}
+          CALLBACK_SECRET: ${{ secrets.THRULINE_CALLBACK_SECRET }}
+        run: |
+          curl --silent --show-error \
+            -X POST "$CALLBACK_URL" \
+            -H "Authorization: Bearer $CALLBACK_SECRET" \
+            -H "Content-Type: application/json" \
+            --data "$(jq -n --arg run_id "$RUN_ID" --arg message "The managed Codex workflow failed. Open the GitHub Actions log for the exact step." \
+              '{run_id:$run_id,status:"failed",message:$message}')" || true
