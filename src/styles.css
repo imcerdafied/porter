@@ -11,6 +11,7 @@
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100%; margin: 0; }
 button, input, textarea { font: inherit; }
+select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
   outline: 3px solid #d89a5b;
@@ -47,6 +48,44 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visib
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.wizard-shell { min-height: 100dvh; padding: 1rem; background: #f5f1e8; color: #1a1a1a; }
+.wizard-card { width: min(100%, 44rem); margin: 0 auto; padding: 1.25rem; border: 1px solid #ded8cb; border-radius: 1.25rem; background: #fffdf8; box-shadow: 0 1rem 3rem rgba(18,55,42,.08); }
+.auth-card { margin-top: max(1rem, 8vh); }
+.wizard-card h1 { margin: .5rem 0; color: #12372a; font: 400 clamp(2rem, 9vw, 2.8rem)/1.05 "DM Serif Display", serif; }
+.wizard-card h2 { margin: 0 0 .75rem; font-size: 1.05rem; }
+.wizard-card section > p { color: #5d6863; line-height: 1.5; }
+.wizard-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.wizard-header p { margin: .2rem 0; }
+.wizard-progress { height: .45rem; margin: .8rem -1.25rem 1.5rem; overflow: hidden; background: #e6e0d5; }
+.wizard-progress i { display: block; height: 100%; background: #12372a; transition: width .2s ease; }
+.wizard-form { display: grid; gap: .55rem; margin-top: 1.5rem; }
+.wizard-form label, .entry-card label { margin-top: .45rem; color: #243b33; font-weight: 600; }
+.wizard-form input, .wizard-form textarea, .wizard-form select, .entry-card textarea { width: 100%; padding: .82rem; border: 1px solid #bcb8af; border-radius: .65rem; color: #1a1a1a; background: white; }
+.primary-button, .secondary-button, .entry-actions button { min-height: 3rem; padding: .75rem 1rem; border: 1px solid #12372a; border-radius: .7rem; cursor: pointer; font-weight: 600; }
+.primary-button { margin-top: 1rem; color: white; background: #12372a; }
+.secondary-button, .entry-actions button { color: #12372a; background: white; }
+.primary-button:disabled, .entry-actions button:disabled { cursor: default; opacity: .5; }
+.text-button { padding: .5rem; border: 0; color: #315e4e; background: transparent; cursor: pointer; text-decoration: underline; }
+.error-text, .warning-text { margin: .5rem 0; padding: .7rem; border-radius: .55rem; color: #862f2f !important; background: #fff0ed; }
+.success-text { margin: .5rem 0; color: #206643; font-weight: 600; }
+.field-note { margin: 0; color: #65736e; font-size: .85rem; }
+.time-banner { padding: .8rem; border-radius: .65rem; color: #593c08; background: #fff1c7; font-weight: 600; }
+.loading-state { display: flex; align-items: center; gap: .7rem; margin: 1rem 0; }
+.loading-state .loading-ring { width: 1.4rem; height: 1.4rem; }
+.source-list { display: grid; gap: .7rem; padding: 0; list-style: none; }
+.source-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; padding: 1rem; border: 1px solid #ddd8ce; border-radius: .7rem; }
+.source-list li p { flex-basis: 100%; }
+.status { padding: .25rem .5rem; border-radius: 999px; font-size: .75rem; text-transform: capitalize; background: #ece9e1; }
+.status--done { color: #155a38; background: #dff3e7; }.status--error { color: #862f2f; background: #fff0ed; }
+.entry-list { display: grid; gap: 1rem; margin: 1.25rem 0; }
+.entry-card { padding: 1rem; border: 1px solid #ddd8ce; border-radius: .8rem; background: white; }
+.entry-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .7rem; }
+.entry-actions .danger-button { color: #862f2f; border-color: #b78383; }
+.continue-button { width: 100%; }
+.summary-card { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin: 1.5rem 0; }
+.summary-card div { padding: 1rem; border-radius: .7rem; background: #f5f1e8; }.summary-card dt { color: #627069; }.summary-card dd { margin: .2rem 0 0; color: #12372a; font-size: 1.8rem; font-weight: 600; }
+@media (min-width: 40rem) { .wizard-shell { padding: 2.5rem 1rem; }.wizard-card { padding: 2rem; }.wizard-progress { margin-inline: -2rem; } }
 
 .guest-shell {
   --property-accent: #1a56db;

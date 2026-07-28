@@ -392,6 +392,9 @@ verify_jwt = false
 [functions.sms-webhook]
 verify_jwt = false
 
+[functions.ingest-source]
+verify_jwt = true
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
