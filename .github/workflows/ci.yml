@@ -1,0 +1,35 @@
+name: Validate Porter
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm audit
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check Edge Functions
+        run: >-
+          deno check
+          --config supabase/functions/deno.json
+          supabase/functions/chat/index.ts
+          supabase/functions/property-config/index.ts
+          supabase/functions/admin-property/index.ts
+          supabase/functions/whatsapp-webhook/index.ts
+          supabase/functions/sms-webhook/index.ts
