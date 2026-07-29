@@ -19,10 +19,13 @@ describe("GuestChat", () => {
   beforeEach(() => {
     sessionStorage.clear();
     vi.mocked(porterApi.propertyConfig).mockResolvedValue({
+      id: "property-1",
       slug: "atlantis-pilot",
       name: "Atlantis Resort",
       logo_url: null,
       accent_color: "#0057b7",
+      wayfinding_enabled: false,
+      phunware_building_id: null,
     });
     vi.mocked(porterApi.chat).mockReset();
   });

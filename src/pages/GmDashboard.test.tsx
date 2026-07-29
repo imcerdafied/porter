@@ -9,7 +9,7 @@ vi.mock("../hooks/useDashboardStats", async (original) => {
   const actual = await original<typeof import("../hooks/useDashboardStats")>();
   return { ...actual, useDashboardStats: () => ({ totalConversations: null, deflectionRate: null, escalationRate: null, upsellClicks: null, identitiesCaptured: null, attributedRevenue: 1234.5, revenueConfig: null, topIntents: [], loading: false, error: null }) };
 });
-vi.mock("../lib/analytics", () => ({ logDashboardEvent: vi.fn().mockResolvedValue(undefined) }));
+vi.mock("../lib/analytics", () => ({ logDashboardEvent: vi.fn().mockResolvedValue(undefined), trackEvent: vi.fn() }));
 vi.mock("../lib/supabase", () => ({ supabase: { storage: { from: vi.fn() } } }));
 
 describe("GM dashboard", () => {

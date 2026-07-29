@@ -1,4 +1,20 @@
 import { supabase } from "./supabase";
+import { emitConciergeEvent } from "./emitEvent";
+
+export type WayfindingEvent =
+  | "wayfinding_cta_shown"
+  | "wayfinding_cta_tapped"
+  | "wayfinding_upsell_shown"
+  | "wayfinding_upsell_cta_tapped";
+
+export function trackEvent(eventName: WayfindingEvent, properties: Record<string, unknown> = {}): void {
+  const propertyId = typeof properties.property_id === "string" ? properties.property_id : undefined;
+  if (eventName === "wayfinding_cta_shown" || eventName === "wayfinding_cta_tapped") {
+    void emitConciergeEvent(eventName, properties, "web", propertyId);
+    return;
+  }
+  if (propertyId) void logDashboardEvent(propertyId, eventName, properties);
+}
 
 export async function logWizardEvent(
   propertyId: string,

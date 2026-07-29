@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DateRangeSelector } from "../components/DateRangeSelector";
 import { KPITile } from "../components/KPITile";
+import { WayfindingUpsellCard } from "../components/WayfindingUpsellCard";
 import { useAuth } from "../hooks/useAuth";
 import { isDateRange, useDashboardStats, type DateRange } from "../hooks/useDashboardStats";
 import { useProperty } from "../hooks/useProperty";
@@ -62,6 +63,7 @@ export default function GmDashboard() {
       {stats.loading ? <p aria-live="polite">Loading intents…</p> : stats.topIntents.length === 0 ? <p aria-live="polite">—</p> :
         <ol>{stats.topIntents.map((item) => <li key={item.intent}><span>{item.intent}</span><span className="intent-bar" aria-hidden="true"><i style={{ width: `${item.conversation_count / maxIntent * 100}%` }} /></span><strong aria-label={`${item.conversation_count} conversations`}>{item.conversation_count}</strong></li>)}</ol>}
     </section>
+    <WayfindingUpsellCard propertyId={property.id} wayfindingTier={property.wayfinding_tier ?? "none"} wayfindingEnabled={property.wayfinding_enabled ?? false} onUpdated={() => void propertyState.refresh()} />
     {property.pilot_report_status === "ready" && <section className="report-card"><h2>30-day pilot report</h2><p>Share the full pilot results with your ownership team.</p><button className="primary-button" type="button" onClick={() => void downloadReport()}>Download Day-30 Report</button>{reportError && <p className="error-text" role="alert">{reportError}</p>}</section>}
     <button className="text-button dashboard-signout" onClick={() => void auth.signOut().then(() => window.location.assign("/"))}>Sign out</button>
   </main>;

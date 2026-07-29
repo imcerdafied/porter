@@ -20,7 +20,7 @@ Deno.serve(async (request) => {
     );
     const { data, error } = await supabase
       .from("properties")
-      .select("slug,name,logo_url,accent_color")
+      .select("id,slug,name,logo_url,accent_color,wayfinding_enabled,phunware_building_id")
       .eq("slug", slug)
       .maybeSingle();
     if (error) throw error;
