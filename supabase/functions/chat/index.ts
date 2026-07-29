@@ -20,6 +20,7 @@ Deno.serve(async (request) => {
       threadKey: String(body.thread_key ?? ""),
       channel: String(body.channel ?? "") as Channel,
       message: String(body.message ?? ""),
+      funId: body.fun_id ? String(body.fun_id) : undefined,
     });
     return json(result);
   } catch (error) {
