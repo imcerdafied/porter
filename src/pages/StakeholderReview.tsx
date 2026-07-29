@@ -38,7 +38,7 @@ export default function StakeholderReview() {
             <h2>Review the pilot</h2>
             <p>See the read-only operating view a GM uses to understand deflection, escalations, and value.</p>
           </div>
-          <strong>Open GM dashboard <span aria-hidden="true">→</span></strong>
+          <strong>Open Pulse dashboard <span aria-hidden="true">→</span></strong>
         </a>
       </section>
 

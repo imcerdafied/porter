@@ -61,7 +61,7 @@ export default function StakeholderGmPreview() {
 
       <header className="dashboard-header preview-dashboard-header">
         <div>
-          <p className="eyebrow">Porter dashboard</p>
+          <p className="eyebrow">Pulse</p>
           <h1>Atlantis Resort</h1>
           <p className="preview-pilot-day">Day 22 of your 30-day pilot</p>
         </div>

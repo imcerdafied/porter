@@ -11,7 +11,7 @@ describe("StakeholderReview", () => {
       "href",
       "/atlantis-pilot?review=1",
     );
-    expect(screen.getByRole("link", { name: /Open GM dashboard/ })).toHaveAttribute("href", "/review/gm");
+    expect(screen.getByRole("link", { name: /Open Pulse dashboard/ })).toHaveAttribute("href", "/review/gm");
     expect(screen.getByText("Guest experience is live · GM data is simulated")).toBeVisible();
   });
 });

@@ -27,8 +27,9 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .range-selector button[aria-pressed="true"] { color: #fff; background: #12372a; }
 .dashboard-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; max-width: 75rem; margin: 0 auto 1rem; }
 .kpi-tile, .intents-card, .report-card { border: 1px solid #ded8cb; border-radius: 1rem; background: #fffdf8; box-shadow: 0 .5rem 2rem rgba(18,55,42,.06); }
-.kpi-tile { display: grid; gap: .35rem; min-height: 9rem; align-content: center; padding: 1.25rem; }
-.kpi-tile__value { color: #12372a; font-size: clamp(2rem, 5vw, 2.8rem); }
+.kpi-tile { min-width: 0; display: grid; gap: .35rem; min-height: 9rem; align-content: center; padding: 1.25rem; overflow: hidden; }
+.kpi-tile__value { max-width: 100%; color: #12372a; font-size: clamp(2rem, 3.4vw, 2.8rem); line-height: 1; white-space: nowrap; }
+.kpi-tile--currency .kpi-tile__value { font-size: clamp(1.65rem, 2.5vw, 2.3rem); letter-spacing: -.035em; }
 .kpi-tile__label { color: #52635c; font-weight: 600; }
 .intents-card, .report-card { max-width: 75rem; margin: 1rem auto; padding: 1.5rem; }
 .intents-card h2, .report-card h2 { margin-top: 0; color: #12372a; }

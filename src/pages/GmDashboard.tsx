@@ -50,7 +50,7 @@ export default function GmDashboard() {
   }
   const maxIntent = stats.topIntents[0]?.conversation_count ?? 1;
   return <main className="dashboard-shell">
-    <header className="dashboard-header"><div><p className="eyebrow">Porter dashboard</p><h1>{property.name}</h1></div><DateRangeSelector value={range} onChange={changeRange} /></header>
+    <header className="dashboard-header"><div><p className="eyebrow">Pulse</p><h1>{property.name}</h1></div><DateRangeSelector value={range} onChange={changeRange} /></header>
     {stats.error && <p className="error-text" role="alert">{stats.error}</p>}
     <section className="dashboard-kpis" aria-label="Key performance indicators">
       <KPITile label="Deflection rate" value={stats.deflectionRate} format="percent" loading={stats.loading} />
