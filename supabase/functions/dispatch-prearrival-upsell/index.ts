@@ -2,6 +2,23 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { json, optionsResponse } from "../_shared/http.ts";
 import { requireServiceRequest, sendWhatsAppTemplate } from "../_shared/revenue.ts";
 
+type SessionRow = {
+  id: string;
+  fun_id: string;
+  property_id: string;
+  guest_phone: string | null;
+  checkin_at: string;
+  properties: { slug: string | null } | { slug: string | null }[] | null;
+};
+
+type CardRow = { id: string; title: string; display_order: number };
+type ScoreRow = {
+  card_id: string;
+  score: number | string;
+  event_count: number | string;
+  display_order: number;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse();
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -19,7 +36,7 @@ Deno.serve(async (req) => {
       .gt("checkin_at", now.toISOString()).lte("checkin_at", horizon);
     if (error) throw new Error(error.message);
     const results: Record<string, unknown>[] = [];
-    for (const session of sessions ?? []) {
+    for (const session of (sessions ?? []) as unknown as SessionRow[]) {
       const { data: config } = await admin.from("property_revenue_config").select("prearrival_window_hours,max_upsells_per_stay")
         .eq("property_id", session.property_id).maybeSingle();
       const hours = (new Date(session.checkin_at).getTime() - now.getTime()) / 3_600_000;
@@ -31,13 +48,14 @@ Deno.serve(async (req) => {
       if (remaining <= 0) continue;
       const { data: cards } = await admin.from("upsell_cards").select("id,title,display_order")
         .eq("property_id", session.property_id).eq("active", true).order("display_order");
-      const available = (cards ?? []).filter((card) => !delivered.has(card.id));
+      const available = ((cards ?? []) as CardRow[]).filter((card) => !delivered.has(card.id));
       if (!available.length) continue;
       const { data: scores } = await admin.rpc("get_upsell_intent_scores", {
         p_fun_id: session.fun_id, p_property_id: session.property_id, p_card_ids: available.map((card) => card.id),
       });
-      const enoughData = (scores ?? []).some((score) => Number(score.event_count) >= 10);
-      const orderedIds = new Map((scores ?? []).sort(enoughData
+      const scoreRows = (scores ?? []) as ScoreRow[];
+      const enoughData = scoreRows.some((score) => Number(score.event_count) >= 10);
+      const orderedIds = new Map<string, number>(scoreRows.sort(enoughData
         ? (a, b) => Number(b.score) - Number(a.score) || a.display_order - b.display_order
         : (a, b) => a.display_order - b.display_order).map((row, index) => [row.card_id, index]));
       available.sort((a, b) => (orderedIds.get(a.id) ?? 999) - (orderedIds.get(b.id) ?? 999));
@@ -51,7 +69,8 @@ Deno.serve(async (req) => {
         if (session.guest_phone) {
           try {
             const slug = Array.isArray(session.properties) ? session.properties[0]?.slug : session.properties?.slug;
-            const link = `https://porter.app/${slug}?upsell=${card.id}&delivery=${delivery.id}&stay=${session.id}`;
+            const publicBaseUrl = Deno.env.get("PORTER_PUBLIC_URL") ?? "https://porter-taupe.vercel.app";
+            const link = `${publicBaseUrl}/${slug}?upsell=${card.id}&delivery=${delivery.id}&stay=${session.id}`;
             const messageId = await sendWhatsAppTemplate(session.guest_phone, "prearrival_upsell", [card.title, link]);
             await admin.from("upsell_deliveries").update({ whatsapp_message_id: messageId ?? null }).eq("id", delivery.id);
           } catch (sendError) {

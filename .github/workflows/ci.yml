@@ -33,3 +33,5 @@ jobs:
           supabase/functions/admin-property/index.ts
           supabase/functions/whatsapp-webhook/index.ts
           supabase/functions/sms-webhook/index.ts
+          supabase/functions/ingest-source/index.ts
+          supabase/functions/generate-pilot-report/index.ts

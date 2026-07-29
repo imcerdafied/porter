@@ -105,9 +105,9 @@ create policy "owners manage conversions" on public.upsell_conversions for all t
 create or replace function public.get_upsell_intent_scores(p_fun_id uuid, p_property_id uuid, p_card_ids uuid[])
 returns table(card_id uuid, score numeric, event_count bigint, display_order integer)
 language sql security definer set search_path = public stable as $$
-  select c.id,
-    count(e.id)::numeric + count(e.id) filter (where e.fun_id = p_fun_id)::numeric * 2,
-    count(e.id), c.display_order
+  select c.id as card_id,
+    count(e.id)::numeric + count(e.id) filter (where e.fun_id = p_fun_id)::numeric * 2 as score,
+    count(e.id) as event_count, c.display_order
   from public.upsell_cards c
   left join public.upsell_cards peer on peer.moment = c.moment
   left join public.upsell_events e on e.upsell_card_id = peer.id
