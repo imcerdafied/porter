@@ -9,7 +9,8 @@ import { supabase } from "../lib/supabase";
 
 export default function GmDashboard() {
   const auth = useAuth();
-  const propertyState = useProperty(auth.user?.id);
+  const requestedProperty = useMemo(() => new URLSearchParams(window.location.search).get("property"), []);
+  const propertyState = useProperty(auth.user?.id, requestedProperty);
   const initialRange = useMemo(() => { const value = new URLSearchParams(window.location.search).get("range"); return isDateRange(value) ? value : "7d"; }, []);
   const [range, setRange] = useState<DateRange>(initialRange);
   const [reportError, setReportError] = useState("");

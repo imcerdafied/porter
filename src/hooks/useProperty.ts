@@ -11,7 +11,7 @@ export interface Property {
 }
 export type PropertyInput = Pick<Property, "name" | "address" | "star_rating" | "primary_language" | "contact_email">;
 
-export function useProperty(userId?: string) {
+export function useProperty(userId?: string, propertyId?: string | null) {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(Boolean(userId));
   const [error, setError] = useState<string | null>(null);
@@ -19,12 +19,13 @@ export function useProperty(userId?: string) {
   const refresh = useCallback(async () => {
     if (!userId) { setProperty(null); setLoading(false); return; }
     setLoading(true);
-    const { data, error: queryError } = await supabase.from("properties").select("*")
-      .eq("owner_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    let query = supabase.from("properties").select("*").eq("owner_id", userId);
+    if (propertyId) query = query.eq("id", propertyId);
+    const { data, error: queryError } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
     setError(queryError?.message ?? null);
     setProperty(data as Property | null);
     setLoading(false);
-  }, [userId]);
+  }, [userId, propertyId]);
   useEffect(() => { void refresh(); }, [refresh]);
 
   async function upsertProperty(input: PropertyInput) {
