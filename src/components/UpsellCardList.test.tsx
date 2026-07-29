@@ -17,6 +17,7 @@ const cards: UpsellCard[] = [
     cta_label: "First CTA",
     destination_url: "https://example.com/first",
     display_order: 1,
+    attributed_revenue_usd: 20,
   },
   {
     id: "second",
@@ -27,6 +28,7 @@ const cards: UpsellCard[] = [
     cta_label: "Second CTA",
     destination_url: "https://example.com/second",
     display_order: 2,
+    attributed_revenue_usd: null,
   },
 ];
 

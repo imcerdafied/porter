@@ -10,6 +10,7 @@ export interface UpsellCard {
   cta_label: string;
   destination_url: string;
   display_order: number;
+  attributed_revenue_usd: number | null;
 }
 
 interface UpsellCardsState {
@@ -31,7 +32,7 @@ export function useUpsellCards(propertyId: string): UpsellCardsState {
 
     supabase
       .from("upsell_cards")
-      .select("id, property_id, moment, title, body, cta_label, destination_url, display_order")
+      .select("id, property_id, moment, title, body, cta_label, destination_url, display_order, attributed_revenue_usd")
       .eq("property_id", propertyId)
       .eq("active", true)
       .order("display_order", { ascending: true })
