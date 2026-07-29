@@ -238,6 +238,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   font-size: 0.92rem;
   line-height: 1.55;
 }
+.identity-capture { margin: -1.5rem auto 1.5rem; padding: 1rem; border: 1px solid #d7d2c7; border-radius: .85rem; background: #faf8f2; }
+.identity-capture label { display: block; margin-bottom: .65rem; color: #314840; font-size: .88rem; font-weight: 600; line-height: 1.4; }
+.identity-capture__row { display: flex; flex-wrap: wrap; gap: .5rem; }
+.identity-capture input { min-width: 12rem; flex: 1; padding: .7rem .8rem; border: 1px solid #aaa69e; border-radius: .6rem; color: #18312b; background: white; }
+.identity-capture button { min-height: 2.75rem; padding: .6rem .9rem; border: 1px solid #12372a; border-radius: .6rem; color: white; background: #12372a; cursor: pointer; font-weight: 600; }
+.identity-capture .identity-capture__skip { color: #315e4e; background: transparent; }
+.identity-capture button:disabled { cursor: default; opacity: .55; }
+.identity-capture__error { margin: .65rem 0 0; color: #862f2f; font-size: .82rem; }
+@media (max-width: 25rem) { .identity-capture__row input { flex-basis: 100%; }.identity-capture__row button { flex: 1; } }
 
 /* Upsell cards */
 .upsell-cards { margin: 1.5rem 0; }

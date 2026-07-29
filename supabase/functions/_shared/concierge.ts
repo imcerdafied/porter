@@ -5,6 +5,7 @@ import {
   HEDGE_PHRASE,
   TEMPORARY_FALLBACK,
 } from "./prompt.ts";
+import { findIdentity } from "./identity.ts";
 
 export type Channel = "web" | "whatsapp" | "sms";
 
@@ -13,6 +14,7 @@ interface ConciergeInput {
   threadKey: string;
   channel: Channel;
   message: string;
+  funId?: string;
 }
 
 interface HistoryMessage {
@@ -79,6 +81,19 @@ export async function handleConciergeMessage(input: ConciergeInput) {
   if (propertyError) throw propertyError;
   if (!property) throw new PropertyNotFoundError("Property not found");
 
+  let funId = input.funId;
+  if (funId) {
+    const { data } = await supabase.from("guest_identities").select("fun_id").eq("fun_id", funId).maybeSingle();
+    if (!data) funId = undefined;
+  }
+  if (!funId) funId = await findIdentity(supabase, input.channel, input.threadKey, property.id);
+
+  if (input.channel !== "web" && /^yes\b/i.test(input.message.trim())) {
+    const { error } = await supabase.from("guest_identities").update({ phone_e164: input.threadKey, opt_in_phone: true }).eq("fun_id", funId);
+    if (error) throw error;
+    await supabase.from("concierge_events").insert({ fun_id: funId, event_type: "opt_in_completed", payload: { opt_in_type: "phone" }, channel: input.channel, property_id: property.id });
+  }
+
   const { data: conversation, error: conversationError } = await supabase
     .from("conversations")
     .upsert(
@@ -86,6 +101,7 @@ export async function handleConciergeMessage(input: ConciergeInput) {
         property_id: property.id,
         channel: input.channel,
         thread_key: input.threadKey,
+        fun_id: funId,
       },
       { onConflict: "property_id,channel,thread_key" },
     )
@@ -114,6 +130,10 @@ export async function handleConciergeMessage(input: ConciergeInput) {
     escalation_flag: false,
   });
   if (userInsertError) throw userInsertError;
+  const { error: eventError } = await supabase.from("concierge_events").insert({
+    fun_id: funId, event_type: "question", payload: { character_count: input.message.trim().length }, channel: input.channel, property_id: property.id,
+  });
+  if (eventError) throw eventError;
 
   async function createEscalation(reason: string) {
     const response = await fetch(`${requiredEnv("SUPABASE_URL")}/functions/v1/escalate`, {

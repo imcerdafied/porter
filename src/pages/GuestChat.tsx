@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ChatBubble } from "../components/ChatBubble";
 import { ChatInput } from "../components/ChatInput";
+import { ChatIdentityCapture } from "../components/ChatIdentityCapture";
 import { UpsellCardList } from "../components/UpsellCardList";
 import { useChat } from "../hooks/useChat";
 import { accessibleInk } from "../lib/color";
@@ -10,6 +11,7 @@ import type { PropertyConfig } from "../types";
 export default function GuestChat({ slug }: { slug: string }) {
   const [property, setProperty] = useState<PropertyConfig | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [, setFunId] = useState(() => sessionStorage.getItem("porter_fun_id"));
   const { messages, isLoading, error, sendMessage } = useChat(slug);
   const logRef = useRef<HTMLDivElement>(null);
   const propertyId = new URLSearchParams(window.location.search).get("property")
@@ -82,6 +84,7 @@ export default function GuestChat({ slug }: { slug: string }) {
             <h2>How can I make your stay easier?</h2>
             <p>Ask about the property, dining, hours, or anything else on your mind.</p>
           </div>
+          <ChatIdentityCapture onIdentityReady={setFunId} propertyId={propertyId ?? undefined} propertySlug={slug} />
           {propertyId && <UpsellCardList propertyId={propertyId} />}
           {messages.map((message) => <ChatBubble key={message.id} message={message} />)}
           {isLoading && (

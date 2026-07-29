@@ -13,7 +13,7 @@ Deno.serve(async (request) => {
     if (!conversation_id) return json({ error: "conversation_id is required" }, 422);
     const db = createClient(required("SUPABASE_URL"), serviceKey, { auth: { persistSession: false } });
     const { data: conversation } = await db.from("conversations")
-      .select("id,property_id,channel,thread_key,properties(name,staff_sms_numbers,staff_email_addresses)")
+      .select("id,property_id,channel,thread_key,fun_id,properties(name,staff_sms_numbers,staff_email_addresses)")
       .eq("id", conversation_id).single();
     if (!conversation) return json({ error: "Conversation not found" }, 404);
     const { data: messages } = await db.from("messages").select("role,content,created_at")
@@ -31,6 +31,7 @@ Deno.serve(async (request) => {
       throw error;
     }
     await db.from("conversations").update({ escalated: true }).eq("id", conversation_id);
+    if (conversation.fun_id) await db.from("concierge_events").insert({ fun_id: conversation.fun_id, event_type: "escalation", payload: { reason }, channel: conversation.channel, property_id: conversation.property_id });
     const property = conversation.properties as unknown as { name: string; staff_sms_numbers: string[]; staff_email_addresses: string[] };
     const lastGuest = [...(messages ?? [])].reverse().find((message) => message.role === "user")?.content ?? "No guest message available";
     const appUrl = Deno.env.get("APP_URL") ?? "https://porter.app";

@@ -94,7 +94,7 @@ Deno.serve(async (request) => {
           messaging_product: "whatsapp",
           to: from,
           type: "text",
-          text: { body: result.reply },
+          text: { body: /^yes\b/i.test(userText.trim()) ? `Thanks — Porter will remember you across visits.\n\n${result.reply}` : `${result.reply}\n\nReply YES to let Porter remember you across visits.` },
         }),
       },
     );

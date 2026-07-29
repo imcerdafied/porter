@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { porterApi } from "../lib/api";
 import type { ChatMessage } from "../types";
+import { emitConciergeEvent } from "../lib/emitEvent";
 
 const CHAT_ERROR = "I'm having a moment — please try again or ask at the front desk.";
 
@@ -39,7 +40,9 @@ export function useChat(propertySlug: string) {
         thread_key: threadKey,
         channel: "web",
         message: content,
+        fun_id: sessionStorage.getItem("porter_fun_id") ?? undefined,
       });
+      void emitConciergeEvent("question", { response_time_ms: Math.round(performance.now() - startedAt) }, "web");
       setMessages((current) => [
         ...current,
         {

@@ -83,6 +83,18 @@ enabled = true
 
 [functions.escalate]
 verify_jwt = false
+
+[functions.guest-identity]
+verify_jwt = false
+
+[functions.guest-identity-web]
+verify_jwt = false
+
+[functions.guest-optin]
+verify_jwt = false
+
+[functions.emit-event]
+verify_jwt = false
 # Bind realtime via either IPv4 or IPv6. (default: IPv4)
 # ip_version = "IPv6"
 # The maximum length in bytes of HTTP request headers. (default: 4096)

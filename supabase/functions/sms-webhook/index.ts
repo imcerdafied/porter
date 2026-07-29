@@ -61,7 +61,7 @@ Deno.serve(async (request) => {
       channel: "sms",
       message,
     });
-    return twiml(result.reply);
+    return twiml(/^yes\b/i.test(message.trim()) ? `Thanks — Porter will remember you across visits.\n\n${result.reply}` : `${result.reply}\n\nReply YES to let Porter remember you across visits.`);
   } catch (error) {
     console.error("sms-webhook function error", error);
     return twiml(TEMPORARY_FALLBACK);

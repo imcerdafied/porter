@@ -43,6 +43,7 @@ export const porterApi = {
     thread_key: string;
     channel: "web";
     message: string;
+    fun_id?: string;
   }) {
     return invoke<{ reply: string; conversation_id?: string; duration_ms?: number }>(
       "chat",
