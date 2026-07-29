@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { ChatBubble } from "../components/ChatBubble";
 import { ChatInput } from "../components/ChatInput";
+import { UpsellCardList } from "../components/UpsellCardList";
 import { useChat } from "../hooks/useChat";
 import { accessibleInk } from "../lib/color";
 import { porterApi } from "../lib/api";
@@ -11,6 +12,9 @@ export default function GuestChat({ slug }: { slug: string }) {
   const [pageError, setPageError] = useState<string | null>(null);
   const { messages, isLoading, error, sendMessage } = useChat(slug);
   const logRef = useRef<HTMLDivElement>(null);
+  const propertyId = new URLSearchParams(window.location.search).get("property")
+    ?? import.meta.env.VITE_PROPERTY_ID
+    ?? null;
 
   useEffect(() => {
     let current = true;
@@ -78,6 +82,7 @@ export default function GuestChat({ slug }: { slug: string }) {
             <h2>How can I make your stay easier?</h2>
             <p>Ask about the property, dining, hours, or anything else on your mind.</p>
           </div>
+          {propertyId && <UpsellCardList propertyId={propertyId} />}
           {messages.map((message) => <ChatBubble key={message.id} message={message} />)}
           {isLoading && (
             <div className="message-row message-row--assistant" aria-label="Concierge is typing">
