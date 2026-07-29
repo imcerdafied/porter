@@ -132,6 +132,27 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .staff-reply { padding: 1rem 1.25rem; border-top: 1px solid #ded8cb; }.staff-reply label { display: block; margin-bottom: .4rem; font-weight: 600; }.staff-reply textarea { width: 100%; padding: .75rem; border: 1px solid #aaa69e; border-radius: .65rem; resize: vertical; }.staff-reply .primary-button { margin-top: .5rem; }.conversation-empty { display: grid; place-content: center; padding: 2rem; color: #596963; text-align: center; }.conversation-empty h2 { color: #12372a; }.empty-inbox { color: #596963; line-height: 1.5; }
 @media (max-width: 42rem) { .staff-inbox-layout { display: block; }.escalation-list { border-right: 0; border-bottom: 1px solid #ded8cb; }.conversation-panel__header { align-items: flex-start; flex-direction: column; }.conversation-actions { width: 100%; }.conversation-actions button { flex: 1; }.conversation-panel { min-height: 65dvh; }.staff-inbox-header h1 { font-size: 1.8rem; } }
 
+/* Portfolio */
+.portfolio-shell { min-height: 100dvh; padding: clamp(1rem, 4vw, 3rem); color: #18312b; background: #f5f1e8; }
+.portfolio-page { max-width: 75rem; margin: auto; }
+.portfolio-header { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
+.portfolio-header h1, .portfolio-page > h1 { margin: .3rem 0 0; color: #12372a; font: 400 clamp(2rem, 6vw, 3rem)/1 "DM Serif Display", serif; }
+.portfolio-nav { display: flex; gap: 1.5rem; margin: 1.5rem 0 2rem; border-bottom: 1px solid #ded8cb; }
+.portfolio-nav a { padding: .8rem .15rem; border-bottom: 3px solid transparent; color: #315e4e; font-weight: 600; text-decoration: none; }
+.portfolio-nav a[aria-current="page"] { border-bottom-color: #12372a; color: #12372a; }
+.portfolio-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.portfolio-summary section, .portfolio-panel, .template-card, .portfolio-empty { padding: 1.25rem; border: 1px solid #ded8cb; border-radius: 1rem; background: #fffdf8; box-shadow: 0 .5rem 2rem rgba(18,55,42,.06); }
+.portfolio-summary section { display: grid; gap: .45rem; }.portfolio-summary span { color: #52635c; font-weight: 600; }.portfolio-summary strong { color: #12372a; font-size: 2rem; }
+.portfolio-panel { margin: 1rem 0; }.portfolio-panel h2, .template-card h2 { margin-top: 0; color: #12372a; }
+.table-scroll { overflow-x: auto; }.portfolio-panel table { width: 100%; border-collapse: collapse; text-align: left; }.portfolio-panel th, .portfolio-panel td { padding: .9rem; border-bottom: 1px solid #ded8cb; }.portfolio-panel a { color: #12372a; font-weight: 600; }
+.portfolio-gap { font-weight: 600; text-decoration: underline; text-decoration-color: #12372a; }
+.portfolio-form { display: grid; gap: .55rem; max-width: 42rem; }.portfolio-form label { margin-top: .4rem; font-weight: 600; }.portfolio-form input, .portfolio-form textarea, .portfolio-form select { width: 100%; padding: .82rem; border: 1px solid #bcb8af; border-radius: .65rem; background: white; }.portfolio-create { margin-top: 1.5rem; }
+.template-list { display: grid; gap: 1rem; margin-top: 1rem; }.template-card__header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }.template-card__header strong { white-space: nowrap; }.template-card > p { white-space: pre-wrap; }
+.portfolio-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; }.portfolio-actions .primary-button { margin-top: 0; }.portfolio-actions .danger-button { color: #862f2f; }
+.property-picker { display: grid; gap: .65rem; margin-top: 1rem; border: 1px solid #ded8cb; border-radius: .7rem; }.property-picker div { display: flex; gap: .5rem; }.property-picker .primary-button { justify-self: start; }
+.pricing-nudge { padding: 1rem; border: 2px solid #12372a; border-radius: .8rem; color: #12372a; background: #f5f1e8; font-weight: 600; }.pricing-table tr[aria-current="true"] { outline: 2px solid #12372a; outline-offset: -2px; background: #f5f1e8; }
+@media (max-width: 35rem) { .portfolio-nav { gap: .75rem; }.portfolio-nav a { font-size: .9rem; }.template-card__header { display: block; }.portfolio-panel th, .portfolio-panel td { padding: .7rem; } }
+
 .guest-shell {
   --property-accent: #1a56db;
   --property-accent-ink: #fff;
