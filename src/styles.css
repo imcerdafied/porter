@@ -13,10 +13,31 @@ html, body, #root { min-height: 100%; margin: 0; }
 button, input, textarea { font: inherit; }
 select { font: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
-button:focus-visible, input:focus-visible, textarea:focus-visible, a:focus-visible {
+button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible {
   outline: 3px solid #d89a5b;
   outline-offset: 3px;
 }
+
+.dashboard-shell { min-height: 100dvh; padding: clamp(1rem, 4vw, 3rem); background: #f5f1e8; }
+.dashboard-header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1.5rem; max-width: 75rem; margin: 0 auto 2rem; }
+.dashboard-header h1 { margin: .3rem 0 0; color: #12372a; font: 400 clamp(2rem, 6vw, 3rem)/1 "DM Serif Display", serif; }
+.range-selector { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; padding: .3rem; border: 1px solid #c9c2b5; border-radius: .8rem; }
+.range-selector legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.range-selector button { min-height: 2.75rem; padding: .55rem .8rem; border: 0; border-radius: .55rem; color: #32483f; background: transparent; cursor: pointer; }
+.range-selector button[aria-pressed="true"] { color: #fff; background: #12372a; }
+.dashboard-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; max-width: 75rem; margin: 0 auto 1rem; }
+.kpi-tile, .intents-card, .report-card { border: 1px solid #ded8cb; border-radius: 1rem; background: #fffdf8; box-shadow: 0 .5rem 2rem rgba(18,55,42,.06); }
+.kpi-tile { display: grid; gap: .35rem; min-height: 9rem; align-content: center; padding: 1.25rem; }
+.kpi-tile__value { color: #12372a; font-size: clamp(2rem, 5vw, 2.8rem); }
+.kpi-tile__label { color: #52635c; font-weight: 600; }
+.intents-card, .report-card { max-width: 75rem; margin: 1rem auto; padding: 1.5rem; }
+.intents-card h2, .report-card h2 { margin-top: 0; color: #12372a; }
+.intents-card ol { display: grid; gap: 1rem; padding: 0; list-style-position: inside; }
+.intents-card li { display: grid; grid-template-columns: minmax(8rem, 1fr) 3fr auto; align-items: center; gap: 1rem; }
+.intent-bar { height: .65rem; overflow: hidden; border-radius: 1rem; background: #e3ded3; }.intent-bar i { display: block; height: 100%; background: #2d6a54; }
+.report-card p { color: #52635c; }.report-card .primary-button { margin-top: .25rem; }
+.dashboard-signout { display: block; margin: 1.5rem auto; }
+@media (max-width: 35rem) { .intents-card li { grid-template-columns: 1fr auto; }.intent-bar { grid-column: 1 / -1; grid-row: 2; } }
 
 .eyebrow {
   margin: 0;
