@@ -24,6 +24,16 @@ interface Property {
   id: string;
   name: string;
   knowledge_base: string;
+  escalation_confidence_threshold: number;
+  escalation_keywords: string[];
+}
+
+const HUMAN_REQUESTS = [/\b(?:speak|talk) (?:to|with) (?:someone|a person|a human|staff|a manager)\b/i, /\b(?:real person|human agent|need a person)\b/i];
+
+function escalationReason(message: string, keywords: string[]) {
+  if (HUMAN_REQUESTS.some((pattern) => pattern.test(message))) return "guest_request";
+  const normalized = message.toLocaleLowerCase();
+  return keywords.some((keyword) => keyword.trim() && normalized.includes(keyword.trim().toLocaleLowerCase())) ? "keyword" : null;
 }
 
 export class ConciergeInputError extends Error {}
@@ -62,7 +72,7 @@ export async function handleConciergeMessage(input: ConciergeInput) {
 
   const { data: property, error: propertyError } = await supabase
     .from("properties")
-    .select("id,name,knowledge_base")
+    .select("id,name,knowledge_base,escalation_confidence_threshold,escalation_keywords")
     .eq("slug", input.propertySlug)
     .maybeSingle<Property>();
 
@@ -105,6 +115,18 @@ export async function handleConciergeMessage(input: ConciergeInput) {
   });
   if (userInsertError) throw userInsertError;
 
+  async function createEscalation(reason: string) {
+    const response = await fetch(`${requiredEnv("SUPABASE_URL")}/functions/v1/escalate`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${requiredEnv("SUPABASE_SERVICE_ROLE_KEY")}`, apikey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"), "Content-Type": "application/json" },
+      body: JSON.stringify({ conversation_id: conversationId, reason }),
+    });
+    if (!response.ok) console.error("Escalation creation failed", response.status, await response.text());
+  }
+
+  const immediateReason = escalationReason(input.message, property.escalation_keywords ?? []);
+  if (immediateReason) await createEscalation(immediateReason);
+
   async function persistAssistant(reply: string, escalationFlag: boolean) {
     const { error } = await supabase.from("messages").insert({
       conversation_id: conversationId,
@@ -120,6 +142,7 @@ export async function handleConciergeMessage(input: ConciergeInput) {
       channel: input.channel,
       duration_ms: durationMs,
     }));
+    if (escalationFlag && !immediateReason) await createEscalation("ai_handoff");
     return {
       reply,
       conversation_id: conversationId,

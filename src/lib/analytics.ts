@@ -17,3 +17,8 @@ export async function logDashboardEvent(propertyId: string, eventName: string, p
   const { error } = await supabase.from("dashboard_events").insert({ property_id: propertyId, event_name: eventName, payload });
   if (error) console.warn("Unable to record dashboard event", error.message);
 }
+
+export async function logInboxEvent(propertyId: string, eventName: string, escalationId?: string, payload: Record<string, unknown> = {}) {
+  const { error } = await supabase.from("inbox_events").insert({ property_id: propertyId, escalation_id: escalationId, event_name: eventName, payload });
+  if (error) console.warn("Unable to record inbox event", error.message);
+}
