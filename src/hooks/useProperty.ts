@@ -6,6 +6,8 @@ export interface Property {
   id: string; owner_id: string; name: string; address: string; star_rating: number;
   primary_language: string; contact_email: string; status: "onboarding" | "ingesting" | "review" | "active";
   wizard_step: number; wizard_started_at: string; activated_at: string | null;
+  staff_role?: "gm" | "admin"; pilot_start_date?: string | null;
+  pilot_report_status?: "pending" | "generating" | "ready" | "failed";
 }
 export type PropertyInput = Pick<Property, "name" | "address" | "star_rating" | "primary_language" | "contact_email">;
 
@@ -49,8 +51,9 @@ export function useProperty(userId?: string) {
 
   async function activateProperty() {
     if (!property) return;
+    const activatedAt = new Date();
     const { data, error: mutationError } = await supabase.from("properties")
-      .update({ status: "active", activated_at: new Date().toISOString(), wizard_step: 5 })
+      .update({ status: "active", activated_at: activatedAt.toISOString(), pilot_start_date: activatedAt.toISOString().slice(0, 10), wizard_step: 5 })
       .eq("id", property.id).select().single();
     if (mutationError) throw mutationError;
     setProperty(data as Property);
