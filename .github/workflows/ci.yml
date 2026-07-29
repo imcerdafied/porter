@@ -35,3 +35,4 @@ jobs:
           supabase/functions/sms-webhook/index.ts
           supabase/functions/ingest-source/index.ts
           supabase/functions/generate-pilot-report/index.ts
+          supabase/functions/emit-event/index.ts
