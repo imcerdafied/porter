@@ -27,7 +27,13 @@ export function useAuth() {
       : supabase.auth.signInWithPassword({ email, password }),
     signUp: (email: string, password: string) => configurationError()
       ? Promise.resolve(unavailable())
-      : supabase.auth.signUp({ email, password }),
+      : supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: new URL("/", window.location.origin).toString(),
+          },
+        }),
     signOut: () => supabase.auth.signOut(),
   };
 }
