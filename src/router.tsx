@@ -8,6 +8,8 @@ import StaffLogin from "./pages/StaffLogin";
 import PortfolioDashboard from "./pages/PortfolioDashboard";
 import PortfolioPricing from "./pages/PortfolioPricing";
 import PortfolioTemplates from "./pages/PortfolioTemplates";
+import StakeholderGmPreview from "./pages/StakeholderGmPreview";
+import StakeholderReview from "./pages/StakeholderReview";
 
 export function AppRouter() {
   const segments = window.location.pathname
@@ -17,6 +19,8 @@ export function AppRouter() {
 
   if (segments.length === 0) return <OnboardingWizard />;
   if (segments.length === 1 && segments[0] === "onboarding") return <OnboardingWizard />;
+  if (segments.length === 1 && segments[0] === "review") return <StakeholderReview />;
+  if (segments.length === 2 && segments[0] === "review" && segments[1] === "gm") return <StakeholderGmPreview />;
   if (segments.length === 1 && segments[0] === "dashboard") return <GmDashboard />;
   if (segments.length === 1 && segments[0] === "portfolio") return <ProtectedRoute><PortfolioDashboard /></ProtectedRoute>;
   if (segments.length === 2 && segments[0] === "portfolio" && segments[1] === "templates") return <ProtectedRoute><PortfolioTemplates /></ProtectedRoute>;

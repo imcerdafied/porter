@@ -16,6 +16,7 @@ export default function GuestChat({ slug }: { slug: string }) {
   const [, setFunId] = useState(() => sessionStorage.getItem("porter_fun_id"));
   const { messages, isLoading, error, sendMessage } = useChat(slug);
   const logRef = useRef<HTMLDivElement>(null);
+  const reviewMode = new URLSearchParams(window.location.search).get("review") === "1";
   const propertyId = new URLSearchParams(window.location.search).get("property")
     ?? import.meta.env.VITE_PROPERTY_ID
     ?? null;
@@ -63,10 +64,30 @@ export default function GuestChat({ slug }: { slug: string }) {
   const latestUserMessage = [...messages].reverse().find((message) => message.role === "user");
   const showWayfinding = messages.at(-1)?.role === "assistant"
     && Boolean(latestUserMessage && detectWayfindingIntent(latestUserMessage.content));
+  const scenarios = [
+    "When does the pool close?",
+    "Can I get a late checkout tomorrow?",
+    "My shower is leaking.",
+  ];
+
+  function resetReview() {
+    sessionStorage.removeItem(`porter:${slug}:thread`);
+    sessionStorage.removeItem("porter_fun_id");
+    window.location.reload();
+  }
 
   return (
     <main className="guest-shell" style={theme}>
-      <section className="chat-card" aria-label={`${property.name} concierge`}>
+      <section className={`chat-card${reviewMode ? " chat-card--review" : ""}`} aria-label={`${property.name} concierge`}>
+        {reviewMode && (
+          <aside className="review-preview-bar" aria-label="Stakeholder preview controls">
+            <div>
+              <a href="/review">← Review hub</a>
+              <span>Guest perspective</span>
+            </div>
+            <button type="button" onClick={resetReview}>Reset conversation</button>
+          </aside>
+        )}
         <header className="chat-header">
           {property.logo_url ? (
             <img className="property-logo" src={property.logo_url} alt={`${property.name} logo`} />
@@ -89,6 +110,23 @@ export default function GuestChat({ slug }: { slug: string }) {
             <h2>How can I make your stay easier?</h2>
             <p>Ask about the property, dining, hours, or anything else on your mind.</p>
           </div>
+          {reviewMode && messages.length === 0 && (
+            <section className="review-scenarios" aria-labelledby="review-scenarios-title">
+              <p id="review-scenarios-title">Try a stakeholder scenario</p>
+              <div>
+                {scenarios.map((scenario) => (
+                  <button
+                    key={scenario}
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => void sendMessage(scenario)}
+                  >
+                    {scenario}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
           <ChatIdentityCapture onIdentityReady={setFunId} propertyId={propertyId ?? undefined} propertySlug={slug} />
           {propertyId && <UpsellCardList propertyId={propertyId} />}
           {messages.map((message) => <ChatBubble key={message.id} message={message} />)}
