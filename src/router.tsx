@@ -2,6 +2,9 @@ import AdminKnowledgeBase from "./pages/AdminKnowledgeBase";
 import GuestChat from "./pages/GuestChat";
 import GmDashboard from "./pages/GmDashboard";
 import OnboardingWizard from "./pages/OnboardingWizard";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import StaffInbox from "./pages/StaffInbox";
+import StaffLogin from "./pages/StaffLogin";
 
 export function AppRouter() {
   const segments = window.location.pathname
@@ -12,6 +15,8 @@ export function AppRouter() {
   if (segments.length === 0) return <OnboardingWizard />;
   if (segments.length === 1 && segments[0] === "onboarding") return <OnboardingWizard />;
   if (segments.length === 1 && segments[0] === "dashboard") return <GmDashboard />;
+  if (segments.length === 2 && segments[0] === "staff" && segments[1] === "login") return <StaffLogin />;
+  if (segments.length === 2 && segments[0] === "staff" && segments[1] === "inbox") return <ProtectedRoute><StaffInbox /></ProtectedRoute>;
   if (segments.length === 2 && segments[0] === "admin") {
     return <AdminKnowledgeBase slug={segments[1]} />;
   }

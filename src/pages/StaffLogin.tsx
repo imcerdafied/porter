@@ -1,0 +1,9 @@
+import { useState } from "react";
+import { logInboxEvent } from "../lib/analytics";
+import { configurationError, supabase } from "../lib/supabase";
+
+export default function StaffLogin() {
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
+  async function submit(event: React.FormEvent) { event.preventDefault(); setError(""); setLoading(true); const configError = configurationError(); const result = configError ? { error: new Error("Staff sign-in is not configured.") } : await supabase.auth.signInWithPassword({ email, password }); setLoading(false); if (result.error) { setError("Email or password is incorrect. Try again."); return; } const { data: profile } = await supabase.from("user_profiles").select("property_id").maybeSingle(); if (profile?.property_id) void logInboxEvent(profile.property_id, "staff_login_completed"); window.location.assign("/staff/inbox"); }
+  return <main className="staff-auth-shell"><section className="staff-login-card" aria-labelledby="staff-login-title"><p className="eyebrow">Porter staff</p><h1 id="staff-login-title">Welcome back</h1><p>Sign in to help guests who need a person.</p><form className="wizard-form" onSubmit={(event) => void submit(event)}><label htmlFor="staff-email">Email</label><input id="staff-email" name="email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required /><label htmlFor="staff-password">Password</label><input id="staff-password" name="password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />{error && <p className="error-text" role="alert">{error}</p>}<button className="primary-button" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</button></form></section></main>;
+}
