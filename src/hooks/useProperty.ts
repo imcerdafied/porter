@@ -15,20 +15,28 @@ export interface Property {
 export type PropertyInput = Pick<Property, "name" | "address" | "star_rating" | "primary_language" | "contact_email">;
 
 export function useProperty(userId?: string, propertyId?: string | null) {
+  const queryKey = userId ? `${userId}:${propertyId ?? ""}` : null;
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(Boolean(userId));
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!userId) { setProperty(null); setLoading(false); return; }
+    if (!userId) {
+      setProperty(null);
+      setLoadedKey(null);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     let query = supabase.from("properties").select("*").eq("owner_id", userId);
     if (propertyId) query = query.eq("id", propertyId);
     const { data, error: queryError } = await query.order("created_at", { ascending: false }).limit(1).maybeSingle();
     setError(queryError?.message ?? null);
     setProperty(data as Property | null);
+    setLoadedKey(queryKey);
     setLoading(false);
-  }, [userId, propertyId]);
+  }, [userId, propertyId, queryKey]);
   useEffect(() => { void refresh(); }, [refresh]);
 
   async function upsertProperty(input: PropertyInput) {
@@ -55,13 +63,20 @@ export function useProperty(userId?: string, propertyId?: string | null) {
 
   async function activateProperty() {
     if (!property) return;
-    const activatedAt = new Date();
-    const { data, error: mutationError } = await supabase.from("properties")
-      .update({ status: "active", activated_at: activatedAt.toISOString(), pilot_start_date: activatedAt.toISOString().slice(0, 10), wizard_step: 5 })
-      .eq("id", property.id).select().single();
+    const { data, error: mutationError } = await supabase
+      .rpc("activate_porter_property", { p_property_id: property.id })
+      .single();
     if (mutationError) throw mutationError;
     setProperty(data as Property);
     await logWizardEvent(property.id, "activated");
   }
-  return { property, loading, error, upsertProperty, advanceStep, activateProperty, refresh };
+  return {
+    property,
+    loading: loading || Boolean(queryKey && loadedKey !== queryKey),
+    error,
+    upsertProperty,
+    advanceStep,
+    activateProperty,
+    refresh,
+  };
 }
