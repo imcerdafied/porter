@@ -6,6 +6,7 @@ import {
   TEMPORARY_FALLBACK,
 } from "./prompt.ts";
 import { findIdentity } from "./identity.ts";
+import { requestOpenAI } from "./openai.ts";
 
 export type Channel = "web" | "whatsapp" | "sms";
 
@@ -30,12 +31,21 @@ interface Property {
   escalation_keywords: string[];
 }
 
-const HUMAN_REQUESTS = [/\b(?:speak|talk) (?:to|with) (?:someone|a person|a human|staff|a manager)\b/i, /\b(?:real person|human agent|need a person)\b/i];
+const HUMAN_REQUESTS = [
+  /\b(?:speak|talk) (?:to|with) (?:someone|a person|a human|staff|a manager)\b/i,
+  /\b(?:real person|human agent|need a person)\b/i,
+];
 
 function escalationReason(message: string, keywords: string[]) {
-  if (HUMAN_REQUESTS.some((pattern) => pattern.test(message))) return "guest_request";
+  if (HUMAN_REQUESTS.some((pattern) => pattern.test(message))) {
+    return "guest_request";
+  }
   const normalized = message.toLocaleLowerCase();
-  return keywords.some((keyword) => keyword.trim() && normalized.includes(keyword.trim().toLocaleLowerCase())) ? "keyword" : null;
+  return keywords.some((keyword) =>
+      keyword.trim() && normalized.includes(keyword.trim().toLocaleLowerCase())
+    )
+    ? "keyword"
+    : null;
 }
 
 export class ConciergeInputError extends Error {}
@@ -64,6 +74,7 @@ function validateInput(input: ConciergeInput) {
 export async function handleConciergeMessage(input: ConciergeInput) {
   validateInput(input);
   const startedAt = performance.now();
+  const openaiKey = Deno.env.get("OPENAI_API_KEY");
   const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
 
   const supabase = createClient(
@@ -74,7 +85,9 @@ export async function handleConciergeMessage(input: ConciergeInput) {
 
   const { data: property, error: propertyError } = await supabase
     .from("properties")
-    .select("id,name,knowledge_base,escalation_confidence_threshold,escalation_keywords")
+    .select(
+      "id,name,knowledge_base,escalation_confidence_threshold,escalation_keywords",
+    )
     .eq("slug", input.propertySlug)
     .maybeSingle<Property>();
 
@@ -83,15 +96,32 @@ export async function handleConciergeMessage(input: ConciergeInput) {
 
   let funId = input.funId;
   if (funId) {
-    const { data } = await supabase.from("guest_identities").select("fun_id").eq("fun_id", funId).maybeSingle();
+    const { data } = await supabase.from("guest_identities").select("fun_id")
+      .eq("fun_id", funId).maybeSingle();
     if (!data) funId = undefined;
   }
-  if (!funId) funId = await findIdentity(supabase, input.channel, input.threadKey, property.id);
+  if (!funId) {
+    funId = await findIdentity(
+      supabase,
+      input.channel,
+      input.threadKey,
+      property.id,
+    );
+  }
 
   if (input.channel !== "web" && /^yes\b/i.test(input.message.trim())) {
-    const { error } = await supabase.from("guest_identities").update({ phone_e164: input.threadKey, opt_in_phone: true }).eq("fun_id", funId);
+    const { error } = await supabase.from("guest_identities").update({
+      phone_e164: input.threadKey,
+      opt_in_phone: true,
+    }).eq("fun_id", funId);
     if (error) throw error;
-    await supabase.from("concierge_events").insert({ fun_id: funId, event_type: "opt_in_completed", payload: { opt_in_type: "phone" }, channel: input.channel, property_id: property.id });
+    await supabase.from("concierge_events").insert({
+      fun_id: funId,
+      event_type: "opt_in_completed",
+      payload: { opt_in_type: "phone" },
+      channel: input.channel,
+      property_id: property.id,
+    });
   }
 
   const { data: conversation, error: conversationError } = await supabase
@@ -131,20 +161,40 @@ export async function handleConciergeMessage(input: ConciergeInput) {
   });
   if (userInsertError) throw userInsertError;
   const { error: eventError } = await supabase.from("concierge_events").insert({
-    fun_id: funId, event_type: "question", payload: { character_count: input.message.trim().length }, channel: input.channel, property_id: property.id,
+    fun_id: funId,
+    event_type: "question",
+    payload: { character_count: input.message.trim().length },
+    channel: input.channel,
+    property_id: property.id,
   });
   if (eventError) throw eventError;
 
   async function createEscalation(reason: string) {
-    const response = await fetch(`${requiredEnv("SUPABASE_URL")}/functions/v1/escalate`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${requiredEnv("SUPABASE_SERVICE_ROLE_KEY")}`, apikey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"), "Content-Type": "application/json" },
-      body: JSON.stringify({ conversation_id: conversationId, reason }),
-    });
-    if (!response.ok) console.error("Escalation creation failed", response.status, await response.text());
+    const response = await fetch(
+      `${requiredEnv("SUPABASE_URL")}/functions/v1/escalate`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${requiredEnv("SUPABASE_SERVICE_ROLE_KEY")}`,
+          apikey: requiredEnv("SUPABASE_SERVICE_ROLE_KEY"),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ conversation_id: conversationId, reason }),
+      },
+    );
+    if (!response.ok) {
+      console.error(
+        "Escalation creation failed",
+        response.status,
+        await response.text(),
+      );
+    }
   }
 
-  const immediateReason = escalationReason(input.message, property.escalation_keywords ?? []);
+  const immediateReason = escalationReason(
+    input.message,
+    property.escalation_keywords ?? [],
+  );
   if (immediateReason) await createEscalation(immediateReason);
 
   async function persistAssistant(reply: string, escalationFlag: boolean) {
@@ -162,7 +212,9 @@ export async function handleConciergeMessage(input: ConciergeInput) {
       channel: input.channel,
       duration_ms: durationMs,
     }));
-    if (escalationFlag && !immediateReason) await createEscalation("ai_handoff");
+    if (escalationFlag && !immediateReason) {
+      await createEscalation("ai_handoff");
+    }
     return {
       reply,
       conversation_id: conversationId,
@@ -171,50 +223,69 @@ export async function handleConciergeMessage(input: ConciergeInput) {
     };
   }
 
-  if (!anthropicKey) {
-    console.error("ANTHROPIC_API_KEY not set");
+  if (!openaiKey && !anthropicKey) {
+    console.error("OPENAI_API_KEY and ANTHROPIC_API_KEY are not set");
     return await persistAssistant(CONNECTION_FALLBACK, true);
   }
 
-  const anthropicResponse = await fetch(
-    "https://api.anthropic.com/v1/messages",
-    {
-      method: "POST",
-      headers: {
-        "x-api-key": anthropicKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 400,
-        temperature: 0,
-        system: buildSystemPrompt(property.name, property.knowledge_base),
-        messages: [
-          ...history,
-          { role: "user", content: input.message.trim() },
-        ],
-      }),
-    },
-  );
-
-  if (!anthropicResponse.ok) {
-    console.error(
-      "Anthropic request failed",
-      anthropicResponse.status,
-      await anthropicResponse.text(),
-    );
-    return await persistAssistant(TEMPORARY_FALLBACK, true);
+  let reply = "";
+  if (openaiKey) {
+    try {
+      reply = await requestOpenAI(
+        openaiKey,
+        [...history, { role: "user", content: input.message.trim() }],
+        {
+          instructions: buildSystemPrompt(
+            property.name,
+            property.knowledge_base,
+          ),
+          maxOutputTokens: 400,
+        },
+      );
+    } catch (error) {
+      console.error("OpenAI request failed", error);
+    }
   }
 
-  const payload = await anthropicResponse.json();
-  const reply = payload?.content?.find(
-    (part: { type?: string; text?: string }) =>
-      part.type === "text" && typeof part.text === "string",
-  )?.text?.trim();
+  if (!reply && anthropicKey) {
+    const anthropicResponse = await fetch(
+      "https://api.anthropic.com/v1/messages",
+      {
+        method: "POST",
+        headers: {
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 400,
+          temperature: 0,
+          system: buildSystemPrompt(property.name, property.knowledge_base),
+          messages: [
+            ...history,
+            { role: "user", content: input.message.trim() },
+          ],
+        }),
+      },
+    );
+    if (anthropicResponse.ok) {
+      const payload = await anthropicResponse.json();
+      reply = payload?.content?.find(
+        (part: { type?: string; text?: string }) =>
+          part.type === "text" && typeof part.text === "string",
+      )?.text?.trim() ?? "";
+    } else {
+      console.error(
+        "Anthropic request failed",
+        anthropicResponse.status,
+        await anthropicResponse.text(),
+      );
+    }
+  }
 
   if (!reply) {
-    console.error("Anthropic response did not contain text");
+    console.error("AI response did not contain text");
     return await persistAssistant(TEMPORARY_FALLBACK, true);
   }
 
