@@ -2,6 +2,16 @@ import { createClient } from "npm:@supabase/supabase-js@2.57.4";
 import { json, optionsResponse } from "../_shared/http.ts";
 import { requireServiceRequest, sendWhatsAppTemplate } from "../_shared/revenue.ts";
 
+type SessionRow = {
+  id: string;
+  fun_id: string;
+  property_id: string;
+  guest_phone: string;
+  checkout_at: string;
+  properties: { slug: string | null; name: string | null } |
+    { slug: string | null; name: string | null }[] | null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return optionsResponse();
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -17,7 +27,7 @@ Deno.serve(async (req) => {
       .lte("checkout_at", now.toISOString()).gte("checkout_at", oldest).not("guest_phone", "is", null);
     if (error) throw new Error(error.message);
     const results: Record<string, unknown>[] = [];
-    for (const session of sessions ?? []) {
+    for (const session of (sessions ?? []) as unknown as SessionRow[]) {
       const { data: config } = await admin.from("property_revenue_config")
         .select("post_stay_rebook_window_hours,rebook_discount_pct,rebook_discount_flat_usd").eq("property_id", session.property_id).maybeSingle();
       if (!config) continue;
@@ -32,7 +42,8 @@ Deno.serve(async (req) => {
       const perk = config.rebook_discount_pct != null ? `${config.rebook_discount_pct}% off` :
         config.rebook_discount_flat_usd != null ? `$${Number(config.rebook_discount_flat_usd).toFixed(2)} off` : "a special returning-guest perk";
       try {
-        const link = `https://porter.app/${property?.slug}?rebook=1&delivery=${delivery.id}`;
+        const publicBaseUrl = Deno.env.get("PORTER_PUBLIC_URL") ?? "https://porter-taupe.vercel.app";
+        const link = `${publicBaseUrl}/${property?.slug}?rebook=1&delivery=${delivery.id}`;
         const messageId = await sendWhatsAppTemplate(session.guest_phone, "rebooking_offer", [property?.name ?? "the hotel", perk, link]);
         await admin.from("upsell_deliveries").update({ whatsapp_message_id: messageId ?? null }).eq("id", delivery.id);
         results.push({ session_id: session.id, status: "dispatched" });
