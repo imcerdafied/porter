@@ -15,6 +15,7 @@ const card: UpsellCardType = {
   cta_label: "Request Late Checkout",
   destination_url: "https://example.com/late-checkout",
   display_order: 1,
+  attributed_revenue_usd: 25,
 };
 
 describe("UpsellCard", () => {

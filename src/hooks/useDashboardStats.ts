@@ -9,6 +9,8 @@ export interface DashboardStats {
   escalationRate: number | null;
   upsellClicks: number | null;
   identitiesCaptured: number | null;
+  attributedRevenue: number | null;
+  revenueConfig: { prearrival_window_hours: number; max_upsells_per_stay: number } | null;
   topIntents: { intent: string; conversation_count: number }[];
   loading: boolean;
   error: string | null;
@@ -26,7 +28,8 @@ export function sinceFromRange(range: DateRange, now = new Date()) {
 }
 
 const EMPTY: DashboardStats = { totalConversations: null, deflectionRate: null, escalationRate: null,
-  upsellClicks: null, identitiesCaptured: null, topIntents: [], loading: true, error: null };
+  upsellClicks: null, identitiesCaptured: null, attributedRevenue: null, revenueConfig: null,
+  topIntents: [], loading: true, error: null };
 
 export function useDashboardStats(propertyId: string | null, range: DateRange): DashboardStats {
   const [stats, setStats] = useState(EMPTY);
@@ -35,12 +38,14 @@ export function useDashboardStats(propertyId: string | null, range: DateRange): 
     if (!propertyId) return;
     const current = ++request.current;
     const since = sinceFromRange(range);
-    const [statsResult, intentsResult] = await Promise.all([
+    const [statsResult, intentsResult, revenueResult, configResult] = await Promise.all([
       supabase.rpc("get_dashboard_stats", { p_property_id: propertyId, p_since: since }),
       supabase.rpc("get_top_intents", { p_property_id: propertyId, p_since: since, p_limit: 5 }),
+      supabase.from("property_revenue_summary").select("total_attributed_revenue_usd,day").eq("property_id", propertyId).gte("day", since),
+      supabase.from("property_revenue_config").select("prearrival_window_hours,max_upsells_per_stay").eq("property_id", propertyId).maybeSingle(),
     ]);
     if (current !== request.current) return;
-    const error = statsResult.error ?? intentsResult.error;
+    const error = statsResult.error ?? intentsResult.error ?? revenueResult.error ?? configResult.error;
     if (error) {
       setStats((previous) => ({ ...previous, loading: false, error: "Dashboard data could not be loaded. Try again shortly." }));
       void logDashboardEvent(propertyId, "dashboard_stats_error", { range, message: error.message });
@@ -53,6 +58,8 @@ export function useDashboardStats(propertyId: string | null, range: DateRange): 
       escalationRate: total ? Number(row.escalated_conversations ?? 0) / total * 100 : null,
       upsellClicks: total || Number(row?.upsell_clicks ?? 0) ? Number(row?.upsell_clicks ?? 0) : null,
       identitiesCaptured: total ? Number(row.identities_captured ?? 0) : null,
+      attributedRevenue: revenueResult.data?.length ? revenueResult.data.reduce((sum, item) => sum + Number(item.total_attributed_revenue_usd), 0) : null,
+      revenueConfig: configResult.data,
       topIntents: (intentsResult.data ?? []).map((item: { intent: string; conversation_count: number | string }) => ({ ...item, conversation_count: Number(item.conversation_count) })),
       loading: false, error: null });
     void logDashboardEvent(propertyId, "dashboard_stats_loaded", { range, total_conversations: total });

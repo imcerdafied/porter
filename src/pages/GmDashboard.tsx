@@ -55,6 +55,7 @@ export default function GmDashboard() {
       <KPITile label="Escalation rate" value={stats.escalationRate} format="percent" loading={stats.loading} />
       <KPITile label="Upsell clicks" value={stats.upsellClicks} loading={stats.loading} />
       <KPITile label="Identities captured" value={stats.identitiesCaptured} loading={stats.loading} />
+      <KPITile label="Attributed revenue" value={stats.attributedRevenue ?? null} format="currency" loading={stats.loading} />
     </section>
     <section className="intents-card" aria-labelledby="top-intents-title"><h2 id="top-intents-title">Top intents</h2>
       {stats.loading ? <p aria-live="polite">Loading intents…</p> : stats.topIntents.length === 0 ? <p aria-live="polite">—</p> :

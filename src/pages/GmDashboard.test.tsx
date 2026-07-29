@@ -7,7 +7,7 @@ vi.mock("../hooks/useAuth", () => ({ useAuth: () => ({ user: { id: "user-1" }, l
 vi.mock("../hooks/useProperty", () => ({ useProperty: () => ({ loading: false, property: { id: "property-1", name: "Porter House", status: "active", staff_role: "gm", pilot_report_status: "ready" } }) }));
 vi.mock("../hooks/useDashboardStats", async (original) => {
   const actual = await original<typeof import("../hooks/useDashboardStats")>();
-  return { ...actual, useDashboardStats: () => ({ totalConversations: null, deflectionRate: null, escalationRate: null, upsellClicks: null, identitiesCaptured: null, topIntents: [], loading: false, error: null }) };
+  return { ...actual, useDashboardStats: () => ({ totalConversations: null, deflectionRate: null, escalationRate: null, upsellClicks: null, identitiesCaptured: null, attributedRevenue: 1234.5, revenueConfig: null, topIntents: [], loading: false, error: null }) };
 });
 vi.mock("../lib/analytics", () => ({ logDashboardEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("../lib/supabase", () => ({ supabase: { storage: { from: vi.fn() } } }));
@@ -19,6 +19,7 @@ describe("GM dashboard", () => {
     render(<GmDashboard />);
     expect(screen.getByRole("heading", { name: "Porter House" })).toBeVisible();
     expect(screen.getAllByText("—")).toHaveLength(5);
+    expect(screen.getByText("$1,234.50")).toBeVisible();
     expect(screen.getByRole("button", { name: "Download Day-30 Report" })).toBeVisible();
   });
 
