@@ -85,13 +85,19 @@ Deno.serve(async (request: Request) => {
   }
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const cronSecret = Deno.env.get("PORTER_CRON_SECRET");
   if (!url || !serviceKey) {
     return new Response(
       JSON.stringify({ error: "Report generation is not configured." }),
       { status: 500, headers: JSON_HEADERS },
     );
   }
-  if (request.headers.get("authorization") !== `Bearer ${serviceKey}`) {
+  const serviceAuthorized =
+    request.headers.get("authorization") === `Bearer ${serviceKey}`;
+  const cronAuthorized = Boolean(
+    cronSecret && request.headers.get("x-porter-cron-secret") === cronSecret,
+  );
+  if (!serviceAuthorized && !cronAuthorized) {
     return new Response(JSON.stringify({ error: "Not authorized." }), {
       status: 401,
       headers: JSON_HEADERS,
