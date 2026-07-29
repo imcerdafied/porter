@@ -3,7 +3,9 @@ import { ChatBubble } from "../components/ChatBubble";
 import { ChatInput } from "../components/ChatInput";
 import { ChatIdentityCapture } from "../components/ChatIdentityCapture";
 import { UpsellCardList } from "../components/UpsellCardList";
+import { WayfindingCTACard } from "../components/WayfindingCTACard";
 import { useChat } from "../hooks/useChat";
+import { detectWayfindingIntent } from "../hooks/useWayfindingIntent";
 import { accessibleInk } from "../lib/color";
 import { porterApi } from "../lib/api";
 import type { PropertyConfig } from "../types";
@@ -58,6 +60,9 @@ export default function GuestChat({ slug }: { slug: string }) {
     "--property-accent": property.accent_color,
     "--property-accent-ink": accessibleInk(property.accent_color),
   } as CSSProperties;
+  const latestUserMessage = [...messages].reverse().find((message) => message.role === "user");
+  const showWayfinding = messages.at(-1)?.role === "assistant"
+    && Boolean(latestUserMessage && detectWayfindingIntent(latestUserMessage.content));
 
   return (
     <main className="guest-shell" style={theme}>
@@ -87,6 +92,7 @@ export default function GuestChat({ slug }: { slug: string }) {
           <ChatIdentityCapture onIdentityReady={setFunId} propertyId={propertyId ?? undefined} propertySlug={slug} />
           {propertyId && <UpsellCardList propertyId={propertyId} />}
           {messages.map((message) => <ChatBubble key={message.id} message={message} />)}
+          {showWayfinding && <WayfindingCTACard propertyId={property.id} wayfindingEnabled={property.wayfinding_enabled} buildingId={property.phunware_building_id} />}
           {isLoading && (
             <div className="message-row message-row--assistant" aria-label="Concierge is typing">
               <div className="typing-indicator"><i /><i /><i /></div>

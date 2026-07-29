@@ -8,6 +8,9 @@ export interface Property {
   wizard_step: number; wizard_started_at: string; activated_at: string | null;
   staff_role?: "gm" | "admin"; pilot_start_date?: string | null;
   pilot_report_status?: "pending" | "generating" | "ready" | "failed";
+  wayfinding_tier?: "none" | "basic" | "premium";
+  wayfinding_enabled?: boolean;
+  phunware_building_id?: string | null;
 }
 export type PropertyInput = Pick<Property, "name" | "address" | "star_rating" | "primary_language" | "contact_email">;
 
