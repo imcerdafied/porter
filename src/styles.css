@@ -239,6 +239,55 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   line-height: 1.55;
 }
 
+/* Upsell cards */
+.upsell-cards { margin: 1.5rem 0; }
+.upsell-cards__loading { color: #65736e; text-align: center; }
+.upsell-cards__heading {
+  margin: 0 0 .75rem;
+  color: #12372a;
+  font-size: .875rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.upsell-cards__list { display: flex; flex-direction: column; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.upsell-card {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr auto;
+  align-items: center;
+  gap: .75rem;
+  padding: 1rem;
+  border: 1px solid rgba(18, 55, 42, .15);
+  border-radius: .75rem;
+  background: #f5f1e8;
+}
+.upsell-card--late_checkout { border-left: 3px solid #c8872a; }
+.upsell-card--spa { border-left: 3px solid #4a7c59; }
+.upsell-card--dining { border-left: 3px solid #8a4a1c; }
+.upsell-card--general { border-left: 3px solid #12372a; }
+.upsell-card__icon { font-size: 1.5rem; text-align: center; }
+.upsell-card__title { margin: 0 0 .25rem; color: #12372a; font-size: .9375rem; font-weight: 600; }
+.upsell-card__body { margin: 0; color: #4a4a4a; font-size: .8125rem; line-height: 1.4; }
+.upsell-card__cta {
+  min-width: 44px;
+  min-height: 44px;
+  padding: .5rem .875rem;
+  border: 0;
+  border-radius: .5rem;
+  color: #f5f1e8;
+  background: #12372a;
+  cursor: pointer;
+  font-size: .8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.upsell-card__cta:hover { background: #1a5240; }
+.upsell-card__cta:focus-visible { outline: 2px solid #12372a; outline-offset: 2px; }
+@media (max-width: 30rem) {
+  .upsell-card { grid-template-columns: 2rem 1fr; grid-template-rows: auto auto; }
+  .upsell-card__cta { grid-column: 1 / -1; width: 100%; }
+}
+
 .message-row { display: flex; margin: 0.7rem 0; }
 .message-row--user { justify-content: flex-end; }
 .message-row--assistant { justify-content: flex-start; }
