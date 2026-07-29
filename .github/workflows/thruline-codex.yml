@@ -79,7 +79,8 @@ jobs:
             echo "Implement the approved Thruline build item below in this repository."
             echo "Work autonomously until it is reviewable. Make the smallest complete change."
             echo "Follow repository instructions and conventions. Do not edit CI workflows,"
-            echo "secrets, or unrelated files. Run relevant checks. A human will review the PR."
+            echo "secrets, or unrelated files. Run relevant checks."
+            echo "If dependencies change, update and commit the repository lockfile."
             echo
             echo "## Approved work"
             echo "Title: $ISSUE_TITLE"
@@ -100,6 +101,23 @@ jobs:
       - name: Require Codex success
         if: steps.codex.outcome != 'success'
         run: exit 1
+
+      - name: Synchronize dependencies changed by Codex
+        shell: bash
+        run: |
+          if [ -f package.json ] && [ -f package-lock.json ]; then
+            npm install --package-lock-only --ignore-scripts
+            npm ci
+          fi
+          if [ -f package.json ] && [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install --lockfile-only
+            pnpm install --frozen-lockfile
+          fi
+          if [ -f package.json ] && [ -f yarn.lock ]; then
+            corepack enable
+            yarn install
+          fi
 
       - name: Verify repository
         shell: bash
@@ -135,7 +153,7 @@ jobs:
           {
             echo "Automated build from an approved Thruline item."
             echo
-            echo "**Human review and merge required.**"
+            echo "**Thruline will follow repository checks. Autonomous continuation merges only after they pass.**"
             echo
             echo "Closes #$ISSUE_NUMBER"
             echo "Thruline-Item: $ITEM_ID"
@@ -169,7 +187,7 @@ jobs:
             -H "Authorization: Bearer $CALLBACK_SECRET" \
             -H "Content-Type: application/json" \
             --data "$(jq -n --arg run_id "$RUN_ID" --arg pr_url "$PR_URL" --arg branch "$BRANCH" \
-              '{run_id:$run_id,status:"review_ready",message:"Codex finished. The pull request is ready for human review.",pr_url:$pr_url,branch:$branch,evidence:["Codex completed in GitHub Actions","Repository checks captured in the pull request"]}')"
+              '{run_id:$run_id,status:"review_ready",message:"Codex finished. Thruline is watching the pull request checks.",pr_url:$pr_url,branch:$branch,evidence:["Codex completed in GitHub Actions","Repository checks captured in the pull request"]}')"
 
       - name: Report failure
         if: failure()
